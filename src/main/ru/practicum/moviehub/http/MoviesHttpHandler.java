@@ -15,7 +15,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
-public class MoviesHttpHandler extends BaseHttpHandler{
+public class MoviesHttpHandler extends BaseHttpHandler {
     private MoviesStore moviesStore;
     private ErrorResponse errorResponse;
     private Gson gson;

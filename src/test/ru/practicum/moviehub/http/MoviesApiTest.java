@@ -88,8 +88,7 @@ public class MoviesApiTest {
 
         assertEquals(200, resp.statusCode(), "GET /movies должен вернуть 200");
 
-        String contentTypeHeaderValue =
-                resp.headers().firstValue("Content-Type").orElse("");
+        String contentTypeHeaderValue = resp.headers().firstValue("Content-Type").orElse("");
         assertEquals("application/json; charset=UTF-8", contentTypeHeaderValue,
                 "Content-Type должен содержать формат данных и кодировку");
         assertEquals(moviesInJson, resp.body(), "Ожидается не пустой JSON-массив");
@@ -103,7 +102,7 @@ public class MoviesApiTest {
         movie.setId(1);
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(BASE + "/movies"))
-                .POST(BodyPublishers.ofString("{\"title\":\""+ title + "\",\"year\":" + year + "}"))
+                .POST(BodyPublishers.ofString("{\"title\":\"" + title + "\",\"year\":" + year + "}"))
                 .headers("Content-Type", "application/json; charset=UTF-8")
                 .build();
 

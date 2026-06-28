@@ -12,7 +12,7 @@ public abstract class BaseHttpHandler implements HttpHandler {
 
     protected void sendJson(HttpExchange ex, int status, String json) throws IOException {
         ex.getResponseHeaders().set("Content-Type", CT_JSON);
-        ex.sendResponseHeaders(status, 0);
+        ex.sendResponseHeaders(status, json.getBytes(StandardCharsets.UTF_8).length);
         try (OutputStream os = ex.getResponseBody()) {
             os.write(json.getBytes(StandardCharsets.UTF_8));
         }

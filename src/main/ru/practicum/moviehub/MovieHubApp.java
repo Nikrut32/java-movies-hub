@@ -8,7 +8,7 @@ import java.io.IOException;
 public class MovieHubApp {
     public static void main(String[] args) {
         try {
-            final MoviesServer server = new MoviesServer(new MoviesStore(), 8081);
+            final MoviesServer server = new MoviesServer(new MoviesStore(), 8080);
             Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
             server.start();
         } catch (IOException e) {

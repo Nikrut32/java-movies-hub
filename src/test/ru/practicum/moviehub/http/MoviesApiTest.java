@@ -2,6 +2,8 @@ package ru.practicum.moviehub.http;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,8 +58,7 @@ public class MoviesApiTest {
                 .GET()
                 .build();
 
-        HttpResponse<String> resp =
-                client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(200, resp.statusCode(), "GET /movies должен вернуть 200");
 
@@ -83,8 +84,7 @@ public class MoviesApiTest {
                 .GET()
                 .build();
 
-        HttpResponse<String> resp =
-                client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(200, resp.statusCode(), "GET /movies должен вернуть 200");
 
@@ -97,21 +97,25 @@ public class MoviesApiTest {
 
     @Test
     void postMovie_withValidPayload_returnsMovieTest() throws Exception {
+        String title = "Inception";
+        int year = 2010;
+        Movie movie = new Movie(title, year);
+        movie.setId(1);
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(BASE + "/movies"))
-                .POST(BodyPublishers.ofString("{\"title\":\"Inception\",\"year\":2010}"))
+                .POST(BodyPublishers.ofString("{\"title\":\""+ title + "\",\"year\":" + year + "}"))
                 .headers("Content-Type", "application/json; charset=UTF-8")
                 .build();
 
-        HttpResponse<String> resp =
-                client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(201, resp.statusCode(), "GET /movies должен вернуть 201");
         String contentTypeHeaderValue =
                 resp.headers().firstValue("Content-Type").orElse("");
         assertEquals("application/json; charset=UTF-8", contentTypeHeaderValue,
                 "Content-Type должен содержать формат данных и кодировку");
-        assertFalse(moviesStore.getListOfMovies().isEmpty(), "Фильм не был добавлен");
+        assertEquals(movie, moviesStore.getListOfMovies().get(1), "Фильм не был добавлен");
     }
 
     @Test
@@ -128,8 +132,7 @@ public class MoviesApiTest {
                 .GET()
                 .build();
 
-        HttpResponse<String> resp =
-                client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(200, resp.statusCode(), "GET /movies должен вернуть 200");
 
@@ -153,8 +156,7 @@ public class MoviesApiTest {
                 .DELETE()
                 .build();
 
-        HttpResponse<String> resp =
-                client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(204, resp.statusCode(), "GET /movies должен вернуть 204");
 
@@ -183,8 +185,7 @@ public class MoviesApiTest {
                 .GET()
                 .build();
 
-        HttpResponse<String> resp =
-                client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(200, resp.statusCode(), "GET /movies должен вернуть 200");
 
@@ -194,4 +195,181 @@ public class MoviesApiTest {
                 "Content-Type должен содержать формат данных и кодировку");
         assertEquals(moviesJson, resp.body(), "Фильмы неверно отфильтрованы");
     }
+
+    @Test
+    void incorrectGetIDTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies/asd"))
+                .GET()
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        JsonObject jsonObject = JsonParser.parseString(resp.body()).getAsJsonObject();
+        String error = jsonObject.get("error").getAsString();
+
+        assertEquals(400, resp.statusCode(), "Выдается не верный код статуса");
+        assertEquals("Ошибка поиска", error, "Неверное тело ошибки");
+    }
+
+    @Test
+    void nonExistentGetIDTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies/1"))
+                .GET()
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        JsonObject jsonObject = JsonParser.parseString(resp.body()).getAsJsonObject();
+        String error = jsonObject.get("error").getAsString();
+
+        assertEquals(404, resp.statusCode(), "Выдается не верный код статуса");
+        assertEquals("Ошибка поиска", error, "Неверное тело ошибки");
+    }
+
+    @Test
+    void incorrectDeleteIDTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies/asd"))
+                .DELETE()
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        JsonObject jsonObject = JsonParser.parseString(resp.body()).getAsJsonObject();
+        String error = jsonObject.get("error").getAsString();
+
+        assertEquals(400, resp.statusCode(), "Выдается не верный код статуса");
+        assertEquals("Ошибка удаления", error, "Неверное тело ошибки");
+    }
+
+    @Test
+    void nonExistentDeleteIDTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies/1"))
+                .DELETE()
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        JsonObject jsonObject = JsonParser.parseString(resp.body()).getAsJsonObject();
+        String error = jsonObject.get("error").getAsString();
+
+        assertEquals(404, resp.statusCode(), "Выдается не верный код статуса");
+        assertEquals("Ошибка удаления", error, "Неверное тело ошибки");
+    }
+
+    @Test
+    void invalidJsonPostTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies"))
+                .POST(BodyPublishers.ofString("{\"title\":\"Inception\",\"year\":}"))
+                .headers("Content-Type", "application/json; charset=UTF-8")
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        JsonObject jsonObject = JsonParser.parseString(resp.body()).getAsJsonObject();
+        String error = jsonObject.get("error").getAsString();
+
+        assertEquals(400, resp.statusCode(), "Выдается не верный код статуса");
+        assertEquals("Невалидный JSON", error, "Неверное тело ошибки");
+    }
+
+    @Test
+    void placeholderNamePostTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies"))
+                .POST(BodyPublishers.ofString("{\"title\":\"\",\"year\":2010}"))
+                .headers("Content-Type", "application/json; charset=UTF-8")
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        JsonObject jsonObject = JsonParser.parseString(resp.body()).getAsJsonObject();
+        String error = jsonObject.get("error").getAsString();
+        String detail = jsonObject.get("details").getAsJsonArray().get(0).getAsString();
+
+        assertEquals(422, resp.statusCode(), "Выдается не верный код статуса");
+        assertEquals("Ошибка добавления фильма", error, "Неверное тело ошибки");
+        assertEquals("Название не должно быть пустым", detail, "Неверное тело детали ошибки");
+    }
+
+    @Test
+    void yearOutOfRangePostTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies"))
+                .POST(BodyPublishers.ofString("{\"title\":\"Inception\",\"year\":201}"))
+                .headers("Content-Type", "application/json; charset=UTF-8")
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        JsonObject jsonObject = JsonParser.parseString(resp.body()).getAsJsonObject();
+        String error = jsonObject.get("error").getAsString();
+        String detail = jsonObject.get("details").getAsJsonArray().get(0).getAsString();
+
+        assertEquals(422, resp.statusCode(), "Выдается не верный код статуса");
+        assertEquals("Ошибка добавления фильма", error, "Неверное тело ошибки");
+        assertEquals("Год должен быть между 1888 и 2026", detail, "Неверное тело детали ошибки");
+    }
+
+    @Test
+    void incorrectContentTypePostTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies"))
+                .POST(BodyPublishers.ofString("{\"title\":\"Inception\",\"year\":2010}"))
+                .headers("Content-Type", "application/json")
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        assertEquals(415, resp.statusCode(), "Выдается не верный код статуса");
+    }
+
+    @Test
+    void unsupportedHttpMethodTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies/1"))
+                .PUT(BodyPublishers.ofString("{\"title\":\"Inception\",\"year\":2010}"))
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        assertEquals(405, resp.statusCode(), "Выдается не верный код статуса");
+    }
+
+    @Test
+    void parameterIsNotNumberGetFilterTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies?year=asd"))
+                .GET()
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        JsonObject jsonObject = JsonParser.parseString(resp.body()).getAsJsonObject();
+        String error = jsonObject.get("error").getAsString();
+
+        assertEquals(400, resp.statusCode(), "Выдается не верный код статуса");
+        assertEquals("Ошибка фильтрации", error, "Неверное тело ошибки");
+    }
+
+    @Test
+    void numberOutOfRangeGetFilterTest() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies?year=asd"))
+                .GET()
+                .build();
+
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        JsonObject jsonObject = JsonParser.parseString(resp.body()).getAsJsonObject();
+        String error = jsonObject.get("error").getAsString();
+
+        assertEquals(400, resp.statusCode(), "Выдается не верный код статуса");
+        assertEquals("Ошибка фильтрации", error, "Неверное тело ошибки");
+    }
+
 }

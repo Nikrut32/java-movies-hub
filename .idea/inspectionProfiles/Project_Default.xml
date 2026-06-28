@@ -5,6 +5,7 @@
       <option name="customHeaders">
         <set>
           <option value="application/json; charset=UTF-8" />
+          <option value="application/json" />
         </set>
       </option>
     </inspection_tool>
